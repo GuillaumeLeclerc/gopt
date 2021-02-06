@@ -53,7 +53,8 @@ class CodeRunner:
     def run_block(self, code, *args, **kwargs):
 
         if self.start_time is None:
-            logging.info(f'Start of optimization')
+            logger = logging.getLogger('gopt.code_runner')
+            logger.info(f'Start of optimization')
             self.start()
 
         if not self.can_run_more():

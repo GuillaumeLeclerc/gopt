@@ -18,6 +18,7 @@ class SingleCoreCPURunner:
         self.optimizer_state = self.optimizer_code.allocator()
 
         self.problem_code.init_state(self.solution_states[0], problem_data)
+        self.optimizer_code.init_state(self.optimizer_state, problem_data)
 
     def run(self, max_iter=None, max_time=None):
         code_runner = CodeRunner(max_iter=max_iter,

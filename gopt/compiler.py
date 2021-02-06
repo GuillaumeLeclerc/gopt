@@ -19,13 +19,15 @@ class Compiler:
 
     @classmethod
     def ufunc(cls, code):
-        return cls.jit(f'User function {code.__name__}', None, code)
+        return cls.jit('ufunc', f'{code.__name__}', None, code)
 
     @classmethod
-    def jit(cls, name, signature, code):
+    def jit(cls, clz, name, signature, code):
         if cls.debug:
             return code
 
-        logging.info(f'Compiling {name}')
+        logger = logging.getLogger('gopt.compiler')
+        logger = logger.getChild(clz)
+        logger.info(f'Compiling {name}')
         return numba.njit(signature, inline=cls.inline,
                           fastmath=cls.fastmath)(code)

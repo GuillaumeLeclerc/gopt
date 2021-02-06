@@ -56,8 +56,6 @@ class Problem(ABC):
             logging.debug(f'Problem {cls.problem_name} already compiled')
             return cls._compiled
 
-        logging.info(f'Compiling problem {cls.problem_name}')
-
         # Types
         state_ntype = numba.typeof(cls.state_dtype).dtype
         pdata_ntype = numba.typeof(cls.problem_data_dtype).dtype
@@ -87,11 +85,11 @@ class Problem(ABC):
 
 
         # Compilation of all the functions
-        copy = Compiler.jit('copier', copy_signature, copy)
-        loss = Compiler.jit('loss', loss_signature, cls.loss)
-        init = Compiler.jit('initializer', init_state_signature,
+        copy = Compiler.jit(cls.__name__, 'copier', copy_signature, copy)
+        loss = Compiler.jit(cls.__name__, 'loss', loss_signature, cls.loss)
+        init = Compiler.jit(cls.__name__, 'initializer', init_state_signature,
                             cls.state_init)
-        neighbor = Compiler.jit('movement function', neighbor_signature,
+        neighbor = Compiler.jit(cls.__name__, 'movement function', neighbor_signature,
                                 cls.neighbor)
 
         def pre_neighbor_loss(state, problem_data, previous_loss=None):
@@ -115,7 +113,7 @@ class Problem(ABC):
         else:
             neighbor_loss = pre_neighbor_loss
 
-        neighbor_loss = Compiler.jit('neighbor+loss combined function',
+        neighbor_loss = Compiler.jit(cls.__name__, 'neighbor+loss combined function',
                                      neighbor_loss_signature,
                                      neighbor_loss)
         cls._compiled = SimpleNamespace(allocator=allocator, copy_state=copy,

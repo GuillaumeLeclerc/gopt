@@ -7,10 +7,14 @@ from gopt.problems import EuclieanTSP
 from gopt.optimizers import LocalSearch
 from gopt.runners import SingleCoreCPURunner
 
-Compiler.debug=False
+Compiler.debug = False
+# To speed up compilation during development
+# Should be 'always' in production
+Compiler.inline = 'never'
 
-root = logging.getLogger()
-root.setLevel(logging.INFO)
+# root = logging.getLogger('gopt.compiler.LocalSearch')
+logging.basicConfig(format='%(levelname)s [%(name)s]:%(message)s',
+                    level=logging.INFO)
 
 DATA = np.random.uniform(size=(1000, 2)).astype('float32')
 NUM_CITIES = DATA.shape[0]

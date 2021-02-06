@@ -35,12 +35,22 @@ class Optimizer(ABC):
             raise NotImplementedError
         raise NotImplementedError
 
+    # This is the function called to initialize the state of the optimizer
+    @classmethod
+    def generate_init_code(cls, Problem):
+        if cls.state_dtype is not None:
+            m = "generate_step_code has to be impleted on stateful optimizers"
+            raise NotImplementedError(m)
+
+        def init(my_state, problem_data):
+            pass
+
+        return init
+
     # Since the generated code depends on the Problem, it has to be
     # recompiled all the time
     @classmethod
     def compile(cls, Problem):
-        code = cls.generate_step_code(Problem)
-
         if cls.state_dtype is None:
             cls.state_ntype = numba.void
         else:
@@ -48,11 +58,18 @@ class Optimizer(ABC):
 
         # Should be the signature of the function returned by
         # generate_state_code
-        signature = numba.float32(  # Return the loss of its best solution
+        step_signature = numba.float32(  # Return the loss of its best solution
             cls.state_ntype,
             numba.types.Array(Problem.state_ntype, 1, 'C'),
             Problem.pdata_ntype,
             numba.int64
+        )
+
+        # Should be the signature of the function returned by
+        # generate_init_code
+        init_signature = numba.void(
+            cls.state_ntype,
+            Problem.pdata_ntype,
         )
 
         if cls.state_dtype is None:
@@ -62,9 +79,16 @@ class Optimizer(ABC):
             def allocator(size=1):
                 return np.empty(shape=size, dtype=cls.state_dtype)
 
-        compiled = Compiler.jit('optimizer', signature, code)
+        step_code = cls.generate_step_code(Problem)
+        compiled_step = Compiler.jit(cls.__name__, 'step function',
+                                     step_signature, step_code)
+
+        init_code = cls.generate_init_code(Problem)
+        compiled_init = Compiler.jit(cls.__name__, 'optimizer init function',
+                                     init_signature, init_code)
 
         return SimpleNamespace(
             allocator=allocator,
-            step_code=compiled,
+            step_code=compiled_step,
+            init_state=compiled_init
         )
