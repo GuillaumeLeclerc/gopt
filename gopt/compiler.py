@@ -32,8 +32,9 @@ class Compiler:
         return numba.njit(signature, inline=cls.inline,
                           fastmath=cls.fastmath)(code)
 
+
 # This is a class extended by anything that can be compiled
-# It's just to avoid re
+# It's just to avoid repeating myself
 class Compilable:
 
     ######
@@ -54,5 +55,3 @@ class Compilable:
     @classmethod
     def is_compiled(cls):
         return cls._compiled is not None
-
-

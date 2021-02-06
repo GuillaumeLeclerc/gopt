@@ -10,12 +10,12 @@ class SingleCoreCPURunner:
         self.problem_data = problem_data
 
         self.problem_code = Problem.compile()
-        self.optimizer_code = Optimizer.compile(Problem)
+        self.optimizer_code = Optimizer.compile()
 
         states_required = Optimizer.states_required
         self.solution_states = self.problem_code.allocator(states_required)
 
-        self.optimizer_state = self.optimizer_code.allocator()
+        self.optimizer_state = self.optimizer_code.allocator()[0]
 
         self.problem_code.init_state(self.solution_states[0], problem_data)
         self.optimizer_code.init_state(self.optimizer_state, problem_data)

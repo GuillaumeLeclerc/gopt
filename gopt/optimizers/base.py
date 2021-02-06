@@ -1,20 +1,23 @@
 import numba
 from types import SimpleNamespace
 import numpy as np
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 
-from ..compiler import Compiler
+from ..compiler import Compiler, Compilable
 
 #
 # The goal of this class is to describe a strategy used locally to accept
 # or reject a new neiboring solution
-class Optimizer(ABC):
+class Optimizer(Compilable, metaclass=ABCMeta):
     ######
     # Should be replaced by the user
     ######
     #
     # This is the type of state kept by an optimizer
     state_dtype = None
+    # This is the problem solved by this optimizer
+    # We need to know it in advance so that compilation depend on it
+    Problem = None
     #
     # This describe how many problem states needs to be allocated for this
     # optimizer. It is usually at least 2, one for the current state and one
@@ -30,27 +33,26 @@ class Optimizer(ABC):
     # Please note the lack of *self* as the first argument!
     @staticmethod
     @abstractmethod
-    def generate_step_code(Problem):
-        def step(my_state, solution_states, problem_data, iterations):
-            raise NotImplementedError
+    def step(my_state, solution_states, problem_data, iterations):
         raise NotImplementedError
 
     # This is the function called to initialize the state of the optimizer
-    @classmethod
-    def generate_init_code(cls, Problem):
-        if cls.state_dtype is not None:
-            m = "generate_step_code has to be impleted on stateful optimizers"
-            raise NotImplementedError(m)
-
-        def init(my_state, problem_data):
-            pass
-
-        return init
+    #
+    # Please note the lack of *self* as the first argument!
+    @staticmethod
+    def init(my_state, problem_data):
+        pass
 
     # Since the generated code depends on the Problem, it has to be
     # recompiled all the time
     @classmethod
-    def compile(cls, Problem):
+    def compile(cls):
+        if cls.is_compiled():
+            return cls._compiled
+
+        if cls.Problem is None:
+            raise AssertionError("Problem attribute needs to be provided")
+
         if cls.state_dtype is None:
             cls.state_ntype = numba.void
         else:
@@ -60,8 +62,8 @@ class Optimizer(ABC):
         # generate_state_code
         step_signature = numba.float32(  # Return the loss of its best solution
             cls.state_ntype,
-            numba.types.Array(Problem.state_ntype, 1, 'C'),
-            Problem.pdata_ntype,
+            numba.types.Array(cls.Problem.state_ntype, 1, 'C'),
+            cls.Problem.pdata_ntype,
             numba.int64
         )
 
@@ -69,7 +71,7 @@ class Optimizer(ABC):
         # generate_init_code
         init_signature = numba.void(
             cls.state_ntype,
-            Problem.pdata_ntype,
+            cls.Problem.pdata_ntype,
         )
 
         if cls.state_dtype is None:
@@ -79,13 +81,11 @@ class Optimizer(ABC):
             def allocator(size=1):
                 return np.empty(shape=size, dtype=cls.state_dtype)
 
-        step_code = cls.generate_step_code(Problem)
         compiled_step = Compiler.jit(cls.__name__, 'step function',
-                                     step_signature, step_code)
+                                     step_signature, cls.step)
 
-        init_code = cls.generate_init_code(Problem)
         compiled_init = Compiler.jit(cls.__name__, 'optimizer init function',
-                                     init_signature, init_code)
+                                     init_signature, cls.init)
 
         return SimpleNamespace(
             allocator=allocator,
