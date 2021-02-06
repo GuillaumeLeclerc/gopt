@@ -16,15 +16,15 @@ class LocalSearch(Optimizer):
         # Otherwise numba will be confused
         loss = problem.loss
         copy_state = problem.copy_state
-        neighbor = problem.neighbor
+        neighbor_loss = problem.neighbor_loss
 
         def step(_, solution_states, problem_data, iterations):
             best_so_far = loss(solution_states[0], problem_data)
             copy_state(solution_states, 0, solution_states, 1)
 
             for _ in range(iterations):
-                neighbor(solution_states[1], problem_data)
-                new_loss = loss(solution_states[1], problem_data)
+                new_loss = neighbor_loss(solution_states[1], problem_data,
+                                         best_so_far)
                 if new_loss < best_so_far:
                     best_so_far = new_loss
                     copy_state(solution_states, 1, solution_states, 0)

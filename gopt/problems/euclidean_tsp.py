@@ -16,6 +16,10 @@ def EuclieanTSP(num_cities, dimensionality, dtype=np.float32):
             result += (problem_data[a, i] - problem_data[b, i]) ** 2
         return result
 
+    @Compiler.ufunc
+    def f(i):
+        return i % num_cities
+
     class TSP(Problem):
         problem_name = 'TSP'
         state_dtype = np.dtype([
@@ -32,19 +36,26 @@ def EuclieanTSP(num_cities, dimensionality, dtype=np.float32):
         def loss(state_array, problem_data):
             result = 0
             order = state_array['order']
-            for i in range(num_cities - 1):
-                result += distance(order[i], order[i + 1], problem_data)
-            result += distance(order[0], order[num_cities - 1], problem_data)
-
+            for i in range(num_cities):
+                result += distance(order[f(i)], order[f(i + 1)], problem_data)
             return result
 
         @staticmethod
         def neighbor(state, problem_data):
+            order = state['order']
+            def d(a, b):
+                return distance(order[f(a)], order[f(b)], problem_data)
+
             a = np.random.randint(0, num_cities)
             b = np.random.randint(0, num_cities - 1)
             if b >= a:
                 b += 1
-            order = state['order']
+
+            loss_diff = 0
+            loss_diff -= d(a - 1, a) + d(a, a + 1) + d(b - 1, b) + d(b, b + 1)
             order[a], order[b] = order[b], order[a]
+            loss_diff += d(a - 1, a) + d(a, a + 1) + d(b - 1, b) + d(b, b + 1)
+
+            return loss_diff
 
     return TSP

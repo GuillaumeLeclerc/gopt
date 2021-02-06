@@ -66,6 +66,9 @@ class Problem(ABC):
         loss_signature = numba.float32(state_ntype, pdata_ntype)
         neighbor_signature = numba.optional(numba.float32)(state_ntype,
                                                            pdata_ntype)
+        neighbor_loss_signature = numba.float32(state_ntype,
+                                                pdata_ntype,
+                                                numba.optional(numba.float32))
         copy_signature = numba.void(numba.types.Array(state_ntype, 1, 'C'),
                                     numba.int64,
                                     numba.types.Array(state_ntype, 1, 'C'),
@@ -82,6 +85,7 @@ class Problem(ABC):
         def allocator(size=1):
             return np.empty(shape=size, dtype=cls.state_dtype)
 
+
         # Compilation of all the functions
         copy = Compiler.jit('copier', copy_signature, copy)
         loss = Compiler.jit('loss', loss_signature, cls.loss)
@@ -90,8 +94,33 @@ class Problem(ABC):
         neighbor = Compiler.jit('movement function', neighbor_signature,
                                 cls.neighbor)
 
+        def pre_neighbor_loss(state, problem_data, previous_loss=None):
+            loss_delta = neighbor(state, problem_data)
+
+            if previous_loss is None or loss_delta is None:
+                return loss(state, problem_data)
+            else:
+                return previous_loss + loss_delta
+
+        if Compiler.debug:
+            def neighbor_loss(state, problem_data, previous_loss=None):
+                result = pre_neighbor_loss(state, problem_data, previous_loss)
+                reference = loss(state, problem_data)
+                if not np.isclose(result, reference):
+                    m = ("Loss delta from neighbor function incorrect"
+                         + "(Got " + str(result) + ", expected "
+                         + str(reference) + ")")
+                    raise AssertionError(m)
+                return result
+        else:
+            neighbor_loss = pre_neighbor_loss
+
+        neighbor_loss = Compiler.jit('neighbor+loss combined function',
+                                     neighbor_loss_signature,
+                                     neighbor_loss)
         cls._compiled = SimpleNamespace(allocator=allocator, copy_state=copy,
                                         init_state=init, loss=loss,
-                                        neighbor=neighbor)
+                                        neighbor=neighbor,
+                                        neighbor_loss=neighbor_loss)
 
         return cls._compiled
