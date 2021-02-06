@@ -1,6 +1,7 @@
 import numba
 import logging
 
+
 # This is the compiler class of GOPT
 # Its main use is to let the user configure some potentially preformance
 # impacting settings
@@ -15,6 +16,10 @@ class Compiler:
     #
     # Whether to use llvm fastmath option (see numba documentation)
     fastmath = True
+
+    @classmethod
+    def ufunc(cls, code):
+        return cls.jit(f'User function {code.__name__}', None, code)
 
     @classmethod
     def jit(cls, name, signature, code):
