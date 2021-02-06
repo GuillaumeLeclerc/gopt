@@ -1,24 +1,26 @@
 import numba
 from types import SimpleNamespace
 import numpy as np
+from abc import ABC, abstractmethod
 
 from ..compiler import Compiler
 
 #
 # The goal of this class is to describe a strategy used locally to accept
 # or reject a new neiboring solution
-class Optimizer:
+class Optimizer(ABC):
     ######
-    # Should be provided by the user
+    # Should be replaced by the user
     ######
-
+    #
     # This is the type of state kept by an optimizer
     state_dtype = None
-
+    #
     # This describe how many problem states needs to be allocated for this
     # optimizer. It is usually at least 2, one for the current state and one
     # for the best so far but it can be as much as needed.
     states_required = 2
+    #############
 
     # This is the function that will be run to improve the current best
     # solution
@@ -27,6 +29,7 @@ class Optimizer:
     #
     # Please note the lack of *self* as the first argument!
     @staticmethod
+    @abstractmethod
     def generate_step_code(Problem):
         def step(my_state, solution_states, problem_data, iterations):
             raise NotImplementedError

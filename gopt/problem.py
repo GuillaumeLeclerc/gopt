@@ -2,22 +2,25 @@ import numba
 import logging
 import numpy as np
 from types import SimpleNamespace
+from abc import ABC, abstractmethod
 
 from .compiler import Compiler
 
-class Problem:
+class Problem(ABC):
     ######
     # Should be provided by the user
     ######
-
+    #
     problem_name = 'Generic problem'  # Name of your problem for logging
     state_dtype = None  # The data type of solution to the problem
     problem_data_dtype = None  # The dtype of the data describing an instance
+    ########################
 
     # Fill a state with an initial solution
     #
     # Please note the lack of *self* as the first argument!
     @staticmethod
+    @abstractmethod
     def state_init(state, problem_data):
         raise NotImplementedError
 
@@ -25,6 +28,7 @@ class Problem:
     #
     # Please note the lack of *self* as the first argument!
     @staticmethod
+    @abstractmethod
     def loss(state_array, problem_data):
         raise NotImplementedError
 
@@ -35,12 +39,9 @@ class Problem:
     #
     # Please note the lack of *self* as the first argument!
     @staticmethod
+    @abstractmethod
     def neighbor(state, problem_data):
         raise NotImplementedError
-
-    ######
-    # GOPT internals, do not overwrite!
-    ######
 
     # Will contain a dict of compiled functions
     _compiled = None
@@ -48,7 +49,6 @@ class Problem:
     @classmethod
     def is_compiled(cls):
         return cls._compiled is not None
-
 
     @classmethod
     def compile(cls):
