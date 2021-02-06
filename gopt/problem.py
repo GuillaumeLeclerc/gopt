@@ -2,11 +2,11 @@ import numba
 import logging
 import numpy as np
 from types import SimpleNamespace
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 
-from .compiler import Compiler
+from .compiler import Compiler, Compilable
 
-class Problem(ABC):
+class Problem(Compilable, metaclass=ABCMeta):
     ######
     # Should be provided by the user
     ######
@@ -43,12 +43,9 @@ class Problem(ABC):
     def neighbor(state, problem_data):
         raise NotImplementedError
 
-    # Will contain a dict of compiled functions
-    _compiled = None
-
-    @classmethod
-    def is_compiled(cls):
-        return cls._compiled is not None
+    ######
+    # GOPT internals, do not overwrite!
+    ######
 
     @classmethod
     def compile(cls):
