@@ -24,28 +24,3 @@ class Compiler:
         logging.info(f'Compiling {name}')
         return numba.njit(signature, inline=cls.inline,
                           fastmath=cls.fastmath)(code)
-
-# This is a class extended by anything that can be compiled
-# It's just to avoid re
-class Compilable:
-
-    ######
-    # Should be implemented by deriving classes
-    ######
-
-    @classmethod
-    def compile(cls):
-        raise NotImplementedError
-
-    ######
-    # GOPT internals, do not overwrite!
-    ######
-
-    # Will contain a dict of compiled functions
-    _compiled = None
-
-    @classmethod
-    def is_compiled(cls):
-        return cls._compiled is not None
-
-

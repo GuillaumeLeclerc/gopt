@@ -3,9 +3,9 @@ import logging
 import numpy as np
 from types import SimpleNamespace
 
-from .compiler import Compiler, Compilable
+from .compiler import Compiler
 
-class Problem(Compilable):
+class Problem:
     ######
     # Should be provided by the user
     ######
@@ -41,6 +41,14 @@ class Problem(Compilable):
     ######
     # GOPT internals, do not overwrite!
     ######
+
+    # Will contain a dict of compiled functions
+    _compiled = None
+
+    @classmethod
+    def is_compiled(cls):
+        return cls._compiled is not None
+
 
     @classmethod
     def compile(cls):
