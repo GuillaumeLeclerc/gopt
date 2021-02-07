@@ -61,6 +61,10 @@ class Compiler:
         return numba.njit(signature, inline=cls.inline,
                           fastmath=cls.fastmath)(code)
 
+    loss_dtype = np.float32
+    loss_ntype = numba.typeof(loss_dtype).dtype
+    loss_array_ntype = numba.types.Array(numba.float32, 1, 'C')
+
 
 # This is a class extended by anything that can be compiled
 # It's just to avoid repeating myself

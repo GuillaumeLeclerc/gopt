@@ -45,9 +45,9 @@ class CodeRunner:
 
         try:
             best_ratio = max(iters / time for (iters, time) in history)
-            return int(best_ratio / self.block_freq)
+            return max(1, int(best_ratio / self.block_freq))
         except:
-            return 100
+            return 1
 
 
     def run_block(self, code, *args, **kwargs):

@@ -65,12 +65,11 @@ class Shuffler(Compilable, metaclass=ABCMeta):
             cls.state_ntype = numba.typeof(cls.state_dtype).dtype
 
         solution_state_ntype = numba.types.Array(
-            cls.Optimizer.Problem.state_ntype, 1, 'C')
+            cls.Optimizer.Problem.state_ntype, 2, 'C')
         optimizer_state_ntype = numba.types.Array(
             cls.Optimizer.state_ntype, 1, 'C')
         query_vector_ntype = numba.types.Array(numba.int32, 1, 'C')
 
-        solutions_loss_type = numba.types.Array(numba.float32, 1, 'C')
 
         # Shoud match the signature of cls.schedule_work(...)
         schedule_work_ret_type = numba.types.Tuple((numba.int32, numba.int32))
@@ -78,7 +77,7 @@ class Shuffler(Compilable, metaclass=ABCMeta):
             query_vector_ntype,
             cls.state_ntype,
             solution_state_ntype,
-            solutions_loss_type,
+            numba.types.Array(Compiler.loss_ntype, 2, 'C'),
             numba.int32
         )
 
@@ -87,7 +86,7 @@ class Shuffler(Compilable, metaclass=ABCMeta):
             cls.state_ntype,
             optimizer_state_ntype,
             solution_state_ntype,
-            solutions_loss_type
+            numba.types.Array(Compiler.loss_ntype, 2, 'C')
         )
 
         init_signature = numba.void(
@@ -113,7 +112,7 @@ class Shuffler(Compilable, metaclass=ABCMeta):
             schedule_work=compiled_schedule_work,
             shuffle=compiled_shuffle,
             allocator=allocator,
-            init_state=compiled_init
+            init=compiled_init
         )
 
         return cls._compiled

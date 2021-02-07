@@ -20,8 +20,14 @@ def LocalSearch(Problem):
         states_required = 2
 
         @staticmethod
-        def step(_, solution_states, problem_data, iterations):
-            best_so_far = loss(solution_states[0], problem_data)
+        def step(_, solution_states, solution_losses, problem_data,
+                 iterations):
+
+            if solution_losses[0] == -1:
+                best_so_far = loss(solution_states[0], problem_data)
+            else:
+                best_so_far = solution_losses[0]
+
             copy_state(solution_states, 0, solution_states, 1)
 
             for _ in range(iterations):
@@ -32,6 +38,8 @@ def LocalSearch(Problem):
                     copy_state(solution_states, 1, solution_states, 0)
                 else:
                     copy_state(solution_states, 0, solution_states, 1)
+
+            solution_losses[0] = best_so_far
             return best_so_far
 
     LocalSearch.Problem = Problem

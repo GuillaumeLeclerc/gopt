@@ -20,6 +20,9 @@ class Runner:
         self.query_vector_alloc = Compiler.generate_allocator(
             type(self).__name__, np.int32)
 
+        self.losses_alloc = Compiler.generate_allocator(
+            type(self).__name__, Compiler.loss_dtype)
+
         # Memory Allocation
         ###################
         self.solution_states = self.problem_code.allocator(
@@ -29,22 +32,32 @@ class Runner:
         self.optimizer_states = self.optimizer_code.allocator(
             self.Shuffler.population_size
         )
+
         self.shuffler_state = self.shuffler_code.allocator(1)[0]
 
         self.query_vector = self.query_vector_alloc(
             self.Shuffler.population_size)
+
+        self.solution_losses = self.losses_alloc(
+            self.Shuffler.population_size,
+            self.Optimizer.states_required
+        )
+
+        self.solution_losses.fill(-1)
 
         # State Initialization
         ######################
 
         # TODO consider compiling this (prob not very useful though)
         for pop_id in range(self.Shuffler.population_size):
-            self.optimizer_code.init_state(self.optimizer_states[pop_id],
-                                           problem_data)  # TODO should not need this argument
+            # If the optimizer has no state we don't have to initialize it
+            if len(self.optimizer_states) == self.Shuffler.population_size:
+                self.optimizer_code.init_state(self.optimizer_states[pop_id],
+                                               problem_data)  # TODO should not need this argument
             self.problem_code.init_state(self.solution_states[pop_id, 0],
                                          problem_data)
 
-        self.shuffler_code.init_state(self.shuffler_state, self.query_vector)
+        self.shuffler_code.init(self.shuffler_state, self.query_vector)
 
     def run(self, max_iter=None, max_time=None):
         raise NotImplementedError
