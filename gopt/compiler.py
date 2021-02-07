@@ -1,6 +1,7 @@
+import logging
 import numba
 import numpy as np
-import logging
+from boltons.strutils import bytes2human
 
 
 # This is the compiler class of GOPT
@@ -33,11 +34,21 @@ class Compiler:
         cls.getLogger(clz).info('Generating allocator')
 
         if ntype is None:
-            def allocator(_):
-                return None
+            def allocator(*args):
+                return [None]
         else:
-            def allocator(size=1):
-                return np.empty(shape=size, dtype=ntype)
+            def allocator(*args):
+                logger = logging.getLogger('gopt.allocator')
+                logger = logger.getChild(clz)
+
+                # We have to do this because np.int32.itemsize isn't
+                # defined for some reason
+                size_one = np.empty(shape=1, dtype=ntype).itemsize
+
+                tot_size = np.prod(args) * size_one
+                logger.info(f'Allocating {bytes2human(tot_size)}')
+
+                return np.empty(shape=args, dtype=ntype)
 
         return allocator
 

@@ -91,8 +91,8 @@ class Shuffler(Compilable, metaclass=ABCMeta):
         )
 
         init_signature = numba.void(
-            query_vector_ntype,
-            cls.state_ntype
+            cls.state_ntype,
+            query_vector_ntype
         )
 
         allocator = Compiler.generate_allocator(cls.__name__, cls.state_dtype)
@@ -113,7 +113,7 @@ class Shuffler(Compilable, metaclass=ABCMeta):
             schedule_work=compiled_schedule_work,
             shuffle=compiled_shuffle,
             allocator=allocator,
-            init=compiled_init
+            init_state=compiled_init
         )
 
         return cls._compiled
