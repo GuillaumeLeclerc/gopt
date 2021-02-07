@@ -1,4 +1,5 @@
 import numba
+import numpy as np
 import logging
 
 
@@ -18,17 +19,34 @@ class Compiler:
     fastmath = True
 
     @classmethod
+    def getLogger(cls, clz):
+        logger = logging.getLogger('gopt.compiler')
+        logger = logger.getChild(clz)
+        return logger
+
+    @classmethod
     def ufunc(cls, code):
         return cls.jit('ufunc', f'{code.__name__}', None, code)
+
+    @classmethod
+    def generate_allocator(cls, clz, ntype):
+        cls.getLogger(clz).info('Generating allocator')
+
+        if ntype is None:
+            def allocator(_):
+                return None
+        else:
+            def allocator(size=1):
+                return np.empty(shape=size, dtype=ntype)
+
+        return allocator
 
     @classmethod
     def jit(cls, clz, name, signature, code):
         if cls.debug:
             return code
 
-        logger = logging.getLogger('gopt.compiler')
-        logger = logger.getChild(clz)
-        logger.info(f'Compiling {name}')
+        cls.getLogger(clz).info(f'Compiling {name}')
         return numba.njit(signature, inline=cls.inline,
                           fastmath=cls.fastmath)(code)
 

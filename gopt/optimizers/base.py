@@ -74,12 +74,7 @@ class Optimizer(Compilable, metaclass=ABCMeta):
             cls.Problem.pdata_ntype,
         )
 
-        if cls.state_dtype is None:
-            def allocator(size=1):
-                return None
-        else:
-            def allocator(size=1):
-                return np.empty(shape=size, dtype=cls.state_dtype)
+        allocator = Compiler.generate_allocator(cls.__name__, cls.state_dtype)
 
         compiled_step = Compiler.jit(cls.__name__, 'step function',
                                      step_signature, cls.step)
@@ -87,8 +82,10 @@ class Optimizer(Compilable, metaclass=ABCMeta):
         compiled_init = Compiler.jit(cls.__name__, 'optimizer init function',
                                      init_signature, cls.init)
 
-        return SimpleNamespace(
+        cls._compiled = SimpleNamespace(
             allocator=allocator,
             step_code=compiled_step,
             init_state=compiled_init
         )
+
+        return cls._compiled
