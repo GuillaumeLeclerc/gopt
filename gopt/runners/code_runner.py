@@ -6,7 +6,7 @@ from collections import defaultdict, deque
 
 class CodeRunner:
 
-    def __init__(self, max_iter, max_time, block_freq=10.0, max_cache_size=10):
+    def __init__(self, max_iter, max_time, block_freq=1.0, max_cache_size=10):
         if isinstance(max_time, str):
             max_time = parse(max_time)
 

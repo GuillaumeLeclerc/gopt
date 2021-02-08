@@ -1,8 +1,12 @@
-import numpy as np
+import logging
+from time import time
 from abc import ABCMeta
+import numpy as np
 
 from ..compiler import Compiler, Compilable
 from .code_runner import CodeRunner
+
+base_logger = logging.getLogger('gopt')
 
 class Runner(metaclass=ABCMeta):
 
@@ -51,6 +55,10 @@ class Runner(metaclass=ABCMeta):
         # State Initialization
         ######################
 
+        logger = base_logger.getChild(type(self).__name__)
+        logger.info('Start initializing states')
+
+        start_time = time()
         # TODO consider compiling this (prob not very useful though)
         for pop_id in range(self.Shuffler.population_size):
             # If the optimizer has no state we don't have to initialize it
@@ -61,6 +69,9 @@ class Runner(metaclass=ABCMeta):
                                          problem_data)
 
         self.shuffler_code.init(self.shuffler_state, self.query_vector)
+        logger.info(f'Done initializing states({time() - start_time:.2f}sec)')
+
+
 
     def run(self, max_iter=None, max_time=None):
         raise NotImplementedError
