@@ -1,11 +1,14 @@
 import numpy as np
+from abc import ABCMeta
 
-from ..compiler import Compiler
+from ..compiler import Compiler, Compilable
 from .code_runner import CodeRunner
 
-class Runner:
+class Runner(metaclass=ABCMeta):
 
     def __init__(self, Shuffler, problem_data):
+        self._compiled = None
+
         # super().__init__(Shuffler, problem_data)
         self.Shuffler = Shuffler
         self.Optimizer = Shuffler.Optimizer
@@ -33,7 +36,9 @@ class Runner:
             self.Shuffler.population_size
         )
 
-        self.shuffler_state = self.shuffler_code.allocator(1)[0]
+        self.shuffler_state = self.shuffler_code.allocator(1)
+        if self.shuffler_state is not None:
+            self.shuffler_state = self.shuffler_state[0]
 
         self.query_vector = self.query_vector_alloc(
             self.Shuffler.population_size)
@@ -51,7 +56,7 @@ class Runner:
         # TODO consider compiling this (prob not very useful though)
         for pop_id in range(self.Shuffler.population_size):
             # If the optimizer has no state we don't have to initialize it
-            if len(self.optimizer_states) == self.Shuffler.population_size:
+            if self.optimizer_states is not None:
                 self.optimizer_code.init_state(self.optimizer_states[pop_id],
                                                problem_data)  # TODO should not need this argument
             self.problem_code.init_state(self.solution_states[pop_id, 0],

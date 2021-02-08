@@ -35,7 +35,7 @@ class Compiler:
 
         if ntype is None:
             def allocator(*args):
-                return [None]
+                return None
         else:
             def allocator(*args):
                 logger = logging.getLogger('gopt.allocator')
@@ -53,13 +53,13 @@ class Compiler:
         return allocator
 
     @classmethod
-    def jit(cls, clz, name, signature, code):
+    def jit(cls, clz, name, signature, code, parallel=False):
         if cls.debug:
             return code
 
         cls.getLogger(clz).info(f'Compiling {name}')
         return numba.njit(signature, inline=cls.inline,
-                          fastmath=cls.fastmath)(code)
+                          fastmath=cls.fastmath, parallel=parallel)(code)
 
     loss_dtype = np.float32
     loss_ntype = numba.typeof(loss_dtype).dtype

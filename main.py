@@ -11,7 +11,7 @@ from gopt.shufflers import IndependentShuffler
 Compiler.debug = False
 # To speed up compilation during development
 # Should be 'always' for long running jobs
-Compiler.inline = 'never'
+Compiler.inline = 'always'
 
 # root = logging.getLogger('gopt.compiler.LocalSearch')
 logging.basicConfig(format='%(levelname)s [%(name)s]:%(message)s',
@@ -22,8 +22,8 @@ NUM_CITIES = DATA.shape[0]
 
 TSP = EuclieanTSP(DATA.shape[0], DATA.shape[1])
 Optimizer = LocalSearch(TSP)
-Shuffler = IndependentShuffler(Optimizer, 1)
+Shuffler = IndependentShuffler(Optimizer, 32)
 
 runner = CPURunner(Shuffler, DATA, 64)
-loss, solution = runner.run(max_iter=1000000000, max_time='10 sec')
+loss, solution = runner.run(max_iter=1000000000, max_time='1 min')
 print(loss, solution)
