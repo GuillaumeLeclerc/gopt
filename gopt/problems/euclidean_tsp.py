@@ -22,11 +22,14 @@ def EuclieanTSP(num_cities, dimensionality, meta_algo='2-opt', init='NN', dtype=
         return i % num_cities
 
     def random_init(state, problem_data):
-        for i in range(num_cities):
+        for i in np.random.choice(np.arange(num_cities), num_cities, replace=False):
             state['order'][i] = i
-        
+
     def NN_init(state, problem_data):
-        unvisited = np.arange(num_cities)
+        unvisited = []
+        for i in range(num_cities):
+            unvisited.append(i)
+        unvisited = np.array(unvisited)
         curr_node = np.random.choice(unvisited)
         unvisited = np.delete(unvisited, curr_node)
         state['order'][0] = curr_node
@@ -46,7 +49,7 @@ def EuclieanTSP(num_cities, dimensionality, meta_algo='2-opt', init='NN', dtype=
             unvisited = np.delete(unvisited, best_idx)
             state['order'][i] = best_node
 
-    def neighbor_localS(state, problem_data):
+    def neighbor_swapTwo(state, problem_data):
         order = state['order']
         def d(a, b):
             return distance(order[f(a)], order[f(b)], problem_data)
@@ -80,8 +83,14 @@ def EuclieanTSP(num_cities, dimensionality, meta_algo='2-opt', init='NN', dtype=
         return loss_diff_tot
 
 
-    init_funcs = {'random':random_init, 'NN':NN_init}
-    neighbor_funcs = {'localSearch':neighbor_localS, '2-opt':neighbor_twoOpt}
+    init_funcs = {
+                  'random':random_init,
+                  'NN':NN_init
+                }
+    neighbor_funcs = {
+                  'swap-2':neighbor_swapTwo,
+                  '2-opt':neighbor_twoOpt
+                  }
 
     init_func = init_funcs.get(init, None)
     if not init_func:
