@@ -48,8 +48,6 @@ class Runner(metaclass=ABCMeta):
             self.Optimizer.states_required
         )
 
-        self.solution_losses.fill(-1)
-
         # State Initialization
         ######################
 

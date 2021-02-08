@@ -11,7 +11,7 @@ from gopt.shufflers import IndependentShuffler
 Compiler.debug = False
 # To speed up compilation during development
 # Should be 'always' for long running jobs
-Compiler.inline = 'always'
+Compiler.inline = 'never'
 
 # root = logging.getLogger('gopt.compiler.LocalSearch')
 logging.basicConfig(format='%(levelname)s [%(name)s]:%(message)s',

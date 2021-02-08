@@ -1,3 +1,5 @@
+import numpy as np
+
 from .base import Optimizer
 
 def LocalSearch(Problem):
@@ -13,18 +15,27 @@ def LocalSearch(Problem):
     class LocalSearch(Optimizer):
         # This optimizer doesn't need anything other than
         # the state of solutions
-        state_dtype = None
+        state_dtype = np.dtype([
+            ('is_first_iter', np.bool)
+         ])
 
         # Needs two solutions, the current best one (by convention at index 0)
         # and the current one
         states_required = 2
 
         @staticmethod
-        def step(_, solution_states, solution_losses, problem_data,
+        def init(my_state, _):
+            my_state['is_first_iter'] = True
+
+        @staticmethod
+        def step(my_state, solution_states, solution_losses, problem_data,
                  iterations):
 
-            if solution_losses[0] == -1:
+            # No need to recompute the loss if we already computed it
+            # before
+            if my_state['is_first_iter']:
                 best_so_far = loss(solution_states[0], problem_data)
+                my_state['is_first_iter'] = False
             else:
                 best_so_far = solution_losses[0]
 
@@ -40,6 +51,7 @@ def LocalSearch(Problem):
                     copy_state(solution_states, 0, solution_states, 1)
 
             solution_losses[0] = best_so_far
+
             return best_so_far
 
     LocalSearch.Problem = Problem

@@ -23,7 +23,7 @@ class CPURunner(Runner):
             try:
                 code_runner.run_block(runner_code.to_run,
                                       self.query_vector,
-                                      self.optimizer_states,
+                                      self.shuffler_state,
                                       self.solution_states,
                                       self.solution_losses,
                                       self.problem_data,
@@ -98,7 +98,8 @@ class CPURunner(Runner):
         if self.Optimizer.state_dtype is None:
             optimizer_states = numba.typeof(None)
         else:
-            optimizer_states = numba.types.Array(self.Optimizer.state_ntype, 2, 'C')
+            optimizer_states = numba.types.Array(self.Optimizer.state_ntype, 1, 'C')
+
 
         to_run_signature = numba.float32(
             query_vector_ntype,
