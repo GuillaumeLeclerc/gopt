@@ -20,7 +20,7 @@ logging.basicConfig(format='%(levelname)s [%(name)s]:%(message)s',
 DATA = np.random.uniform(size=(1000, 2)).astype('float32')
 NUM_CITIES = DATA.shape[0]
 
-TSP = EuclieanTSP(DATA.shape[0], DATA.shape[1])
+TSP = EuclieanTSP(DATA.shape[0], DATA.shape[1], meta_algo='localSearch', init='NN')
 Optimizer = LocalSearch(TSP)
 Shuffler = IndependentShuffler(Optimizer, 32)
 
