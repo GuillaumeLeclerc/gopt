@@ -6,9 +6,9 @@ GOPT is a framework to run global optimization meta-euristics on combinatorial p
 
 The key charactirstics are:
 
-- **Ease of development**: Problems, algorithms, and even the framework are written in python
+- **Ease of development**: Problems, algorithms, and even the framework are written in Python
 - **Performance**: Before running, all the code is transpiled using [Numba](https://github.com/numba/numba) to provide native speed
-- **Retargetabile**: The code should be able to run on various hardware: CPU, Cuda, ROCM, remote clusters etc...
+- **Retargetable**: The code should be able to run on various hardware: CPU, Cuda, ROCM, remote clusters etc...
 - **Instance Optimized**: The generated code depends on a specific instance of the problem. For example, in the EuclideanTSP case, the number of cities and the dimensionality of the space is known in advanced and the compiler is able to specialize the code (loop unrooling, etc...).
 
 # Concepts
