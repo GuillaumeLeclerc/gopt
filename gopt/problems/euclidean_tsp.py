@@ -1,11 +1,12 @@
 import logging
+from os import stat
 import numba
 import numpy as np
 from ..compiler import Compiler
 
 from .. import Problem
 
-def EuclieanTSP(num_cities, dimensionality, meta_algo='localS', init='NN', dtype=np.float32):
+def EuclieanTSP(num_cities, dimensionality, meta_algo='localSearch', init='NN', dtype=np.float32):
     if dimensionality < 2:
         logging.warning("Seriously ? -_-")
 
@@ -20,13 +21,10 @@ def EuclieanTSP(num_cities, dimensionality, meta_algo='localS', init='NN', dtype
     def f(i):
         return i % num_cities
 
-    @Compiler.ufunc
     def random_init(state, problem_data):
         for i in range(num_cities):
             state['order'][i] = i
         
-    @Compiler.ufunc
-
     def NN_init(state, problem_data):
         unvisited = np.arange(num_cities)
         curr_node = np.random.choice(unvisited)
@@ -47,9 +45,7 @@ def EuclieanTSP(num_cities, dimensionality, meta_algo='localS', init='NN', dtype
             i+=1
             unvisited = np.delete(unvisited, best_idx)
             state['order'][i] = best_node
-        return state
 
-    @Compiler.ufunc
     def neighbor_localS(state, problem_data):
         order = state['order']
         def d(a, b):
@@ -66,20 +62,22 @@ def EuclieanTSP(num_cities, dimensionality, meta_algo='localS', init='NN', dtype
         loss_diff += d(a - 1, a) + d(a, a + 1) + d(b - 1, b) + d(b, b + 1)
 
         return loss_diff
-
-    @Compiler.ufunc
+    
     def neighbor_twoOpt(state, problem_data):
         order = state['order']
         def d(a, b):
             return distance(order[f(a)], order[f(b)], problem_data)
 
-        a = np.random.randint(0, num_cities-4)
-        c = np.random.randint(a+2, num_cities-2)
-        
-        b, e = a+1, c+1
-        loss_diff = d(a, c) + d(b, e) - d(a, b) + d(c, e) 
-        order[b:c+1] = order[b:c+1][::-1]
-        return loss_diff
+        loss_diff_tot = 0
+        for i in range(num_cities-2):
+            for j in range(i+1, num_cities-1):
+                loss_diff = 0
+                loss_diff -= d(i, i+1) + d(j, j+1) 
+                loss_diff += d(i, j) + d(i+1, j+1) 
+                if loss_diff < 0:
+                    order[i+1:j+1] = order[i+1:j+1][::-1]
+                    loss_diff_tot +=  loss_diff
+        return loss_diff_tot
 
     init_func = random_init if init=='random' else NN_init
 
@@ -99,10 +97,6 @@ def EuclieanTSP(num_cities, dimensionality, meta_algo='localS', init='NN', dtype
         problem_data_dtype = np.dtype((dtype, (num_cities, dimensionality)))
 
         @staticmethod
-        def state_init(state, problem_data):
-            init_func(state, problem_data)
-
-        @staticmethod
         def loss(state_array, problem_data):
             result = 0
             order = state_array['order']
@@ -110,8 +104,6 @@ def EuclieanTSP(num_cities, dimensionality, meta_algo='localS', init='NN', dtype
                 result += distance(order[f(i)], order[f(i + 1)], problem_data)
             return result
 
-        @staticmethod
-        def neighbor(state, problem_data):
-            return neighbor_func(state, problem_data)
-
+    TSP.neighbor = staticmethod(neighbor_func)
+    TSP.state_init = staticmethod(init_func)
     return TSP
