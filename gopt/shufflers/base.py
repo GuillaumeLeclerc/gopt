@@ -39,7 +39,7 @@ class Shuffler(Compilable, metaclass=ABCMeta):
     # Please note the lack of *self* as the first argument!
     @staticmethod
     @abstractmethod
-    def shuffle(shuffler_state, optimizer_states, solution_states,
+    def shuffle(shuffler_state, solution_states,
                 solution_losses):
         raise NotImplementedError
 
@@ -53,6 +53,30 @@ class Shuffler(Compilable, metaclass=ABCMeta):
     def init(my_state, query_vector):
         pass
 
+    # This is the function to return the final solution and its loss
+    #
+    # Population size could reasonably be compiled and not be an argument
+    # however it has a couple of drawbacks:
+    # - We could generate the code in compile() based on the provided
+    #   population_size but that would mean users can't override it
+    # - At the moment this function is defined we don't know population size
+    #   so we would have to have all implementations override this function.
+    #   But since we expect most Shuffler to have the same one it's too
+    #   much added complication
+    #
+    # Please note the lack of *self* as the first argument!
+    @staticmethod
+    def final_result(shuffler_state, solution_states, solution_losses,
+                     population_size):
+        best_ix = 0
+        best_loss = solution_losses[0][0]
+        for i in range(1, population_size):
+            if solution_losses[i][0] < best_loss:
+                best_loss = solution_losses[i][0]
+                best_ix = i
+
+        return best_ix
+
     # Compile the current shuffler
     @classmethod
     def compile(cls):
@@ -65,12 +89,9 @@ class Shuffler(Compilable, metaclass=ABCMeta):
             cls.state_ntype = numba.typeof(cls.state_dtype).dtype
 
         solution_state_ntype = numba.types.Array(
-            cls.Optimizer.Problem.state_ntype, 1, 'C')
-        optimizer_state_ntype = numba.types.Array(
-            cls.Optimizer.state_ntype, 1, 'C')
+            cls.Optimizer.Problem.state_ntype, 2, 'C')
+        solution_losses_ntype = numba.types.Array(Compiler.loss_ntype, 2, 'C')
         query_vector_ntype = numba.types.Array(numba.int32, 1, 'C')
-
-        solutions_loss_type = numba.types.Array(numba.float32, 1, 'C')
 
         # Shoud match the signature of cls.schedule_work(...)
         schedule_work_ret_type = numba.types.Tuple((numba.int32, numba.int32))
@@ -78,21 +99,27 @@ class Shuffler(Compilable, metaclass=ABCMeta):
             query_vector_ntype,
             cls.state_ntype,
             solution_state_ntype,
-            solutions_loss_type,
+            solution_losses_ntype,
             numba.int32
         )
 
         # Should match the signature of cls.shuffle(...)
         shuffle_signature = numba.void(
             cls.state_ntype,
-            optimizer_state_ntype,
             solution_state_ntype,
-            solutions_loss_type
+            solution_losses_ntype
         )
 
         init_signature = numba.void(
-            query_vector_ntype,
-            cls.state_ntype
+            cls.state_ntype,
+            query_vector_ntype
+        )
+
+        final_result_signature = numba.int32(
+            cls.state_ntype,
+            solution_state_ntype,
+            solution_losses_ntype,
+            numba.int32
         )
 
         allocator = Compiler.generate_allocator(cls.__name__, cls.state_dtype)
@@ -109,11 +136,16 @@ class Shuffler(Compilable, metaclass=ABCMeta):
                                      init_signature,
                                      cls.init)
 
+        compiled_final_result = Compiler.jit(cls.__name__, 'final_result',
+                                             final_result_signature,
+                                             cls.final_result)
+
         cls._compiled = SimpleNamespace(
             schedule_work=compiled_schedule_work,
             shuffle=compiled_shuffle,
             allocator=allocator,
-            init=compiled_init
+            init=compiled_init,
+            final_result=compiled_final_result
         )
 
         return cls._compiled

@@ -1,1 +1,1 @@
-from .single_core_cpu import SingleCoreCPURunner
+from .cpu_runner import CPURunner

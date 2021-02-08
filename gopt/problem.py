@@ -77,9 +77,7 @@ class Problem(Compilable, metaclass=ABCMeta):
         def copy(source, source_ix, dest, dest_ix):
             dest[dest_ix:dest_ix + 1] = source[source_ix:source_ix + 1]
 
-        def allocator(size=1):
-            return np.empty(shape=size, dtype=cls.state_dtype)
-
+        allocator = Compiler.generate_allocator(cls.__name__, cls.state_dtype)
 
         # Compilation of all the functions
         copy = Compiler.jit(cls.__name__, 'copier', copy_signature, copy)

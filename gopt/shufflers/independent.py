@@ -12,13 +12,13 @@ def IndependentShuffler(Optimizer, population_size):
             return population_size, total_iterations
 
         @staticmethod
-        def init(query_vector, shuffler_state):
+        def init(shuffler_state, query_vector):
             for i in range(population_size):
                 query_vector[i] = i
 
         # Optimizers are independent in the IndependentShuffler
         @staticmethod
-        def shuffle(shuffler_state, optimizer_states, solution_states,
+        def shuffle(shuffler_state, solution_states,
                     solution_losses):
             pass
 

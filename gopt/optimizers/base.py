@@ -33,7 +33,8 @@ class Optimizer(Compilable, metaclass=ABCMeta):
     # Please note the lack of *self* as the first argument!
     @staticmethod
     @abstractmethod
-    def step(my_state, solution_states, problem_data, iterations):
+    def step(my_state, solution_states, solution_losses, problem_data,
+             iterations):
         raise NotImplementedError
 
     # This is the function called to initialize the state of the optimizer
@@ -63,6 +64,7 @@ class Optimizer(Compilable, metaclass=ABCMeta):
         step_signature = numba.float32(  # Return the loss of its best solution
             cls.state_ntype,
             numba.types.Array(cls.Problem.state_ntype, 1, 'C'),
+            Compiler.loss_array_ntype,
             cls.Problem.pdata_ntype,
             numba.int64
         )
@@ -74,7 +76,8 @@ class Optimizer(Compilable, metaclass=ABCMeta):
             cls.Problem.pdata_ntype,
         )
 
-        allocator = Compiler.generate_allocator(cls.__name__, cls.state_dtype)
+        state_allocator = Compiler.generate_allocator(cls.__name__,
+                                                      cls.state_dtype)
 
         compiled_step = Compiler.jit(cls.__name__, 'step function',
                                      step_signature, cls.step)
@@ -83,8 +86,8 @@ class Optimizer(Compilable, metaclass=ABCMeta):
                                      init_signature, cls.init)
 
         cls._compiled = SimpleNamespace(
-            allocator=allocator,
-            step_code=compiled_step,
+            allocator=state_allocator,
+            step=compiled_step,
             init_state=compiled_init
         )
 
