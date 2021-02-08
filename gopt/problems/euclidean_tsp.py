@@ -6,7 +6,7 @@ from ..compiler import Compiler
 
 from .. import Problem
 
-def EuclieanTSP(num_cities, dimensionality, meta_algo='localSearch', init='NN', dtype=np.float32):
+def EuclieanTSP(num_cities, dimensionality, meta_algo='2-opt', init='NN', dtype=np.float32):
     if dimensionality < 2:
         logging.warning("Seriously ? -_-")
 
@@ -79,16 +79,17 @@ def EuclieanTSP(num_cities, dimensionality, meta_algo='localSearch', init='NN', 
                     loss_diff_tot +=  loss_diff
         return loss_diff_tot
 
-    init_func = random_init if init=='random' else NN_init
 
-    if meta_algo == 'localSearch':
-        neighbor_func = neighbor_localS
-    elif meta_algo == '2-opt':
-        neighbor_func = neighbor_twoOpt
-    else:
-        raise ValueError#(f'{meta_algo} not available, choose from \"localSearch"/\"\2-opt"')
+    init_funcs = {'random':random_init, 'NN':NN_init}
+    neighbor_funcs = {'localSearch':neighbor_localS, '2-opt':neighbor_twoOpt}
 
+    init_func = init_funcs.get(init, None)
+    if not init_func:
+        raise ValueError(f"{init} not available, choose from {','.join(init_funcs.keys())}")
 
+    neighbor_func = neighbor_funcs.get(meta_algo, None)
+    if not neighbor_func:
+        raise ValueError(f"{meta_algo} not available, choose from {','.join(neighbor_funcs.keys())}")
     class TSP(Problem):
         problem_name = 'TSP'
         state_dtype = np.dtype([
