@@ -15,9 +15,11 @@ class Compiler:
 
     # Whether to inline functions (see numba documentation)
     inline = 'always'
-    #
+
     # Whether to use llvm fastmath option (see numba documentation)
     fastmath = True
+
+    threading_layer = 'tbb'
 
     @classmethod
     def getLogger(cls, clz):
@@ -54,6 +56,7 @@ class Compiler:
 
     @classmethod
     def jit(cls, clz, name, signature, code, parallel=False):
+        numba.config.THREADING_LAYER = cls.threading_layer
         if cls.debug:
             return code
 
