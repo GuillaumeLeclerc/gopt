@@ -11,6 +11,12 @@ The key charactirstics are:
 - **Retargetable**: The code should be able to run on various hardware: CPU, Cuda, ROCM, remote clusters etc...
 - **Instance Optimized**: The generated code depends on a specific instance of the problem. For example, in the EuclideanTSP case, the number of cities and the dimensionality of the space is known in advanced and the compiler is able to specialize the code (loop unrooling, etc...).
 
+This framework is for example particularly suited for algorithms like:
+- Local Search
+- Simulated Annealing
+- Evolutionary algorithms
+- Etc...
+
 # Concepts
 
 We describe here the main abstractions used by GOPT. Users can use the ones provided in this repository or swap them by their own implementation.
