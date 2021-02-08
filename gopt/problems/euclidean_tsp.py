@@ -85,11 +85,11 @@ def EuclieanTSP(num_cities, dimensionality, meta_algo='2-opt', init='NN', dtype=
 
     init_func = init_funcs.get(init, None)
     if not init_func:
-        raise ValueError(f"{init} not available, choose from {','.join(init_funcs.keys())}")
+        raise ValueError(f"{init} not available, choose from {', '.join(init_funcs.keys())}")
 
     neighbor_func = neighbor_funcs.get(meta_algo, None)
     if not neighbor_func:
-        raise ValueError(f"{meta_algo} not available, choose from {','.join(neighbor_funcs.keys())}")
+        raise ValueError(f"{meta_algo} not available, choose from {', '.join(neighbor_funcs.keys())}")
     class TSP(Problem):
         problem_name = 'TSP'
         state_dtype = np.dtype([
