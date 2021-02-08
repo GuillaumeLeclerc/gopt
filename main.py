@@ -8,7 +8,7 @@ from gopt.optimizers import SimulatedAnnealing
 from gopt.runners import SingleCoreCPURunner
 from gopt.shufflers import IndependentShuffler
 
-Compiler.debug = False
+Compiler.debug = False 
 # To speed up compilation during development
 # Should be 'always' in production
 Compiler.inline = 'never'
@@ -19,8 +19,9 @@ logging.basicConfig(format='%(levelname)s [%(name)s]:%(message)s',
 
 DATA = np.random.uniform(size=(1000, 2)).astype('float32')
 NUM_CITIES = DATA.shape[0]
+meta_algo = '2-opt'
 
-TSP = EuclieanTSP(DATA.shape[0], DATA.shape[1])
+TSP = EuclieanTSP(DATA.shape[0], DATA.shape[1], meta_algo)
 Optimizer = SimulatedAnnealing(TSP, 1000, 1e-4)
 Shuffler = IndependentShuffler(Optimizer, 40)
 Shuffler.compile()
