@@ -18,7 +18,7 @@ def IndependentShuffler(Optimizer, population_size):
 
         # Optimizers are independent in the IndependentShuffler
         @staticmethod
-        def shuffle(shuffler_state, optimizer_states, solution_states,
+        def shuffle(shuffler_state, solution_states,
                     solution_losses):
             pass
 

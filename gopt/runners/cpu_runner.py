@@ -64,7 +64,14 @@ class CPURunner(Runner):
             except (KeyboardInterrupt, StopIteration):
                 break
 
-        return (0, 0)
+        final_result_ix = self.shuffler_code.final_result(
+            self.shuffler_state,
+            self.solution_states,
+            self.solution_losses,
+            self.Shuffler.population_size
+        )
+
+        return self.solution_losses[final_result_ix, 0], self.solution_states[final_result_ix, 0]
 
 
 
