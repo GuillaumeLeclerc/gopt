@@ -24,6 +24,6 @@ TSP = EuclieanTSP(DATA.shape[0], DATA.shape[1])
 Optimizer = LocalSearch(TSP)
 Shuffler = IndependentShuffler(Optimizer, 32)
 
-runner = CPURunner(Shuffler, DATA, 64)
+runner = CPURunner(Shuffler, DATA, 5)
 loss, solution = runner.run(max_iter=1000000000, max_time='1 min')
 print(loss, solution)

@@ -12,8 +12,12 @@ class CPURunner(Runner):
 
     def __init__(self, Shuffler, problem_data, num_cores):
         super().__init__(Shuffler, problem_data)
+        self.num_cores = num_cores
 
     def run(self, max_iter=None, max_time=None):
+        previous_numba_core_count = numba.get_num_threads()
+        numba.set_num_threads(self.num_cores)
+
         runner_code = self.compile()
 
         code_runner = CodeRunner(max_iter=max_iter,
@@ -38,6 +42,9 @@ class CPURunner(Runner):
             self.solution_losses,
             self.Shuffler.population_size
         )
+
+        numba.set_num_threads(previous_numba_core_count)
+
         return (self.solution_losses[final_result_ix, 0],
                 self.solution_states[final_result_ix, 0])
 
