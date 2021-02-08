@@ -5,6 +5,7 @@ import numba
 import psutil
 
 from .base import Runner
+from ..result import Result
 from .code_runner import CodeRunner
 from ..compiler import Compilable, Compiler
 
@@ -28,6 +29,10 @@ class CPURunner(Runner):
         code_runner = CodeRunner(max_iter=max_iter,
                                  max_time=max_time)
 
+
+        logger = logging.getLogger('gopt').getChild(type(self).__name__)
+        logger.info(f'Optimizing')
+
         while True:
             try:
                 code_runner.run_block(runner_code.to_run,
@@ -50,8 +55,13 @@ class CPURunner(Runner):
 
         numba.set_num_threads(previous_numba_core_count)
 
-        return (self.solution_losses[final_result_ix, 0],
-                self.solution_states[final_result_ix, 0])
+        result = Result(
+            self.solution_losses[final_result_ix, 0],
+            self.solution_states[final_result_ix, 0],
+            self.Problem
+        )
+
+        return result
 
 
     def is_compiled(self):
