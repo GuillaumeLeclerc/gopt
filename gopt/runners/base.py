@@ -55,8 +55,8 @@ class Runner(metaclass=ABCMeta):
         # State Initialization
         ######################
 
-        logger = base_logger.getChild(type(self).__name__)
-        logger.info('Start initializing states')
+        self.logger = base_logger.getChild(type(self).__name__)
+        self.logger.info('Start initializing states')
 
         start_time = time()
         # TODO consider compiling this (prob not very useful though)
@@ -69,7 +69,7 @@ class Runner(metaclass=ABCMeta):
                                          problem_data)
 
         self.shuffler_code.init(self.shuffler_state, self.query_vector)
-        logger.info(f'Done initializing states({time() - start_time:.2f}sec)')
+        self.logger.info(f'Done initializing states({time() - start_time:.2f}sec)')
 
 
 

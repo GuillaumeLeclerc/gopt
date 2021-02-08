@@ -2,6 +2,7 @@ from types import SimpleNamespace
 import logging
 import numpy as np
 import numba
+import psutil
 
 from .base import Runner
 from .code_runner import CodeRunner
@@ -10,8 +11,12 @@ from ..compiler import Compilable, Compiler
 
 class CPURunner(Runner):
 
-    def __init__(self, Shuffler, problem_data, num_cores):
+    def __init__(self, Shuffler, problem_data, num_cores=None):
         super().__init__(Shuffler, problem_data)
+        if num_cores is None:
+            num_cores = psutil.cpu_count(logical=False)
+
+        self.logger.info(f'Using {num_cores} threads')
         self.num_cores = num_cores
 
     def run(self, max_iter=None, max_time=None):
