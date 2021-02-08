@@ -36,18 +36,11 @@ import numba
 import numpy as np
 import logging
 
-from gopt import Compiler
 from gopt.problems import EuclieanTSP
 from gopt.optimizers import LocalSearch
 from gopt.runners import CPURunner
 from gopt.shufflers import IndependentShuffler
 
-Compiler.debug = False
-# To speed up compilation during development
-# Should be 'always' for long running jobs
-Compiler.inline = 'never'
-
-# root = logging.getLogger('gopt.compiler.LocalSearch')
 logging.basicConfig(format='%(levelname)s [%(name)s]:%(message)s',
                     level=logging.INFO)
 
