@@ -61,15 +61,30 @@ class Runner(metaclass=ABCMeta):
         start_time = time()
         # TODO consider compiling this (prob not very useful though)
         for pop_id in range(self.Shuffler.population_size):
-            # If the optimizer has no state we don't have to initialize it
-            if self.optimizer_states is not None:
-                self.optimizer_code.init_state(self.optimizer_states[pop_id],
-                                               problem_data)  # TODO should not need this argument
             self.problem_code.init_state(self.solution_states[pop_id, 0],
                                          problem_data)
 
+            # Compute the loss of the newly inited solution
+            self.solution_losses[pop_id, 0] = self.problem_code.loss(
+                self.solution_states[pop_id, 0],
+                self.problem_data
+            )
+
+            # Even if the optimizer has state we might still init it
+            # It could write to the loss vector
+            if self.optimizer_states is not None:
+                opt_state = self.optimizer_states[pop_id]
+            else:
+                opt_state = None
+
+            self.optimizer_code.init_state(opt_state,
+                                           self.solution_states[pop_id],
+                                           self.solution_losses[pop_id],
+                                           problem_data)
+
         self.shuffler_code.init(self.shuffler_state, self.query_vector)
-        self.logger.info(f'Done initializing states({time() - start_time:.2f}sec)')
+        self.logger.info(
+            f'Done initializing states({time() - start_time:.2f}sec)')
 
 
 

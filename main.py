@@ -6,7 +6,7 @@ from gopt import Compiler
 from gopt.problems import EuclieanTSP
 from gopt.optimizers import LocalSearch
 from gopt.runners import CPURunner
-from gopt.shufflers import IndependentShuffler
+from gopt.shufflers import IndependentShuffler, WinnerTakesAll
 
 Compiler.debug = False
 # To speed up compilation during development
@@ -17,12 +17,13 @@ Compiler.inline = 'never'
 logging.basicConfig(format='%(levelname)s [%(name)s]:%(message)s',
                     level=logging.INFO)
 
-DATA = np.random.uniform(size=(1000, 2)).astype('float32')
+DATA = np.random.uniform(size=(10000, 2)).astype('float32')
 NUM_CITIES = DATA.shape[0]
 
-TSP = EuclieanTSP(DATA.shape[0], DATA.shape[1], meta_algo='2-opt', init='NN')
+TSP = EuclieanTSP(DATA.shape[0], DATA.shape[1],
+                  neighborhood='2-opt', init='NN')
 Optimizer = LocalSearch(TSP)
-Shuffler = IndependentShuffler(Optimizer, 1)
+Shuffler = WinnerTakesAll(Optimizer, 16)
 
 runner = CPURunner(Shuffler, DATA)
 result = runner.run(max_iter=1000000000, max_time='1 min')
