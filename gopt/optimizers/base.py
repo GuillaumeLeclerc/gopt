@@ -41,7 +41,7 @@ class Optimizer(Compilable, metaclass=ABCMeta):
     #
     # Please note the lack of *self* as the first argument!
     @staticmethod
-    def init(my_state, problem_data):
+    def init(my_state, solution_states, solution_losses, problem_data):
         pass
 
     # Since the generated code depends on the Problem, it has to be
@@ -73,6 +73,8 @@ class Optimizer(Compilable, metaclass=ABCMeta):
         # generate_init_code
         init_signature = numba.void(
             cls.state_ntype,
+            numba.types.Array(cls.Problem.state_ntype, 1, 'C'),
+            Compiler.loss_array_ntype,
             cls.Problem.pdata_ntype,
         )
 

@@ -75,6 +75,9 @@ class CodeRunner:
         cache = self._timing_caches[code]
         best_block_size = self.get_best_block_size(cache)
 
+        if self.max_iter is not None:
+            best_block_size = min(best_block_size, self.max_iter - self.current_iter)
+
         start_code = time()
         result = code(*args, **kwargs, iterations=best_block_size)
         elapsed = time() - start_code
