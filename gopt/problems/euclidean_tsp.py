@@ -120,9 +120,13 @@ def EuclieanTSP(num_cities, dimensionality, neighborhood='2-opt', init='NN',
         ])
         problem_data_dtype = np.dtype((dtype, (num_cities, dimensionality)))
 
-    if neighbor_func is None:
-        raise ValueError(f"""{neigborhood} not available, choose from
-            {', '.join(neighbor_funcs.keys())}""")
+        @staticmethod
+        def loss(state_array, problem_data):
+            result = 0
+            order = state_array['order']
+            for i in range(num_cities):
+                result += distance(order[f(i)], order[f(i + 1)], problem_data)
+            return result
 
     TSP.neighbor = staticmethod(neighbor_func)
     TSP.state_init = staticmethod(init_func)
