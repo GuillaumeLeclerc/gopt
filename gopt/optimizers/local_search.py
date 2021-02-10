@@ -13,7 +13,6 @@ def RandomLocalSearch(Problem):
     neighbor_loss = problem.neighbor_loss
 
     problem_nh_dim = np.array(Problem.neighbor_dimensionality).astype('int32')
-    print(problem_nh_dim, problem_nh_dim.shape)
 
     class RandomLocalSearch(Optimizer):
         # This optimizer doesn't need anything other than
