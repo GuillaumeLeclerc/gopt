@@ -4,7 +4,7 @@ import numpy as np
 from types import SimpleNamespace
 from abc import ABCMeta, abstractmethod
 
-from .compiler import Compiler, Compilable
+from ..compiler import Compiler, Compilable
 
 class Problem(Compilable, metaclass=ABCMeta):
     ######
@@ -14,6 +14,7 @@ class Problem(Compilable, metaclass=ABCMeta):
     problem_name = 'Generic problem'  # Name of your problem for logging
     state_dtype = None  # The data type of solution to the problem
     problem_data_dtype = None  # The dtype of the data describing an instance
+    neighbor_dimensionality = None  # This describe the dim of the neighborhood
     ########################
 
     # Fill a state with an initial solution
@@ -40,7 +41,7 @@ class Problem(Compilable, metaclass=ABCMeta):
     # Please note the lack of *self* as the first argument!
     @staticmethod
     @abstractmethod
-    def neighbor(state, problem_data):
+    def neighbor(state, problem_data, direction):
         raise NotImplementedError
 
     ######
@@ -57,12 +58,16 @@ class Problem(Compilable, metaclass=ABCMeta):
         state_ntype = numba.typeof(cls.state_dtype).dtype
         pdata_ntype = numba.typeof(cls.problem_data_dtype).dtype
 
+        direction_ntype = numba.types.Array(numba.int32, 1, 'C')
+
         # Signatures
         loss_signature = numba.float32(state_ntype, pdata_ntype)
         neighbor_signature = numba.optional(numba.float32)(state_ntype,
-                                                           pdata_ntype)
+                                                           pdata_ntype,
+                                                           direction_ntype)
         neighbor_loss_signature = numba.float32(state_ntype,
                                                 pdata_ntype,
+                                                direction_ntype,
                                                 numba.optional(numba.float32))
         copy_signature = numba.void(numba.types.Array(state_ntype, 1, 'C'),
                                     numba.int64,
@@ -84,11 +89,12 @@ class Problem(Compilable, metaclass=ABCMeta):
         loss = Compiler.jit(cls.__name__, 'loss', loss_signature, cls.loss)
         init = Compiler.jit(cls.__name__, 'initializer', init_state_signature,
                             cls.state_init)
-        neighbor = Compiler.jit(cls.__name__, 'movement function', neighbor_signature,
-                                cls.neighbor)
+        neighbor = Compiler.jit(cls.__name__, 'movement function',
+                                neighbor_signature, cls.neighbor)
 
-        def pre_neighbor_loss(state, problem_data, previous_loss=None):
-            loss_delta = neighbor(state, problem_data)
+        def pre_neighbor_loss(state, problem_data, direction,
+                              previous_loss=None):
+            loss_delta = neighbor(state, problem_data, direction)
 
             if previous_loss is None or loss_delta is None:
                 return loss(state, problem_data)
@@ -96,8 +102,10 @@ class Problem(Compilable, metaclass=ABCMeta):
                 return previous_loss + loss_delta
 
         if Compiler.debug:
-            def neighbor_loss(state, problem_data, previous_loss=None):
-                result = pre_neighbor_loss(state, problem_data, previous_loss)
+            def neighbor_loss(state, problem_data, direction,
+                              previous_loss=None):
+                result = pre_neighbor_loss(state, problem_data, direction,
+                                           previous_loss)
                 reference = loss(state, problem_data)
                 if not np.isclose(result, reference):
                     m = ("Loss delta from neighbor function incorrect"

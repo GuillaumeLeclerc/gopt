@@ -4,7 +4,7 @@ import numba
 import numpy as np
 from ..compiler import Compiler
 
-from .. import Problem
+from .base import Problem
 
 def EuclieanTSP(num_cities, dimensionality, neighborhood='2-opt', init='NN',
                 dtype=np.float32):
@@ -50,15 +50,19 @@ def EuclieanTSP(num_cities, dimensionality, neighborhood='2-opt', init='NN',
             unvisited = np.delete(unvisited, best_idx)
             state['order'][i] = best_node
 
-    def neighbor_swapTwo(state, problem_data):
+    def neighbor_swapTwo(state, problem_data, direction):
         order = state['order']
         def d(a, b):
             return distance(order[f(a)], order[f(b)], problem_data)
 
-        a = np.random.randint(0, num_cities)
-        b = np.random.randint(0, num_cities - 1)
-        if b >= a:
-            b += 1
+        a, b = direction
+
+        if b < a:
+            a, b = b, a
+
+        # swapping the same cities
+        if (a == b):
+            return 0.0
 
         loss_diff = 0
         loss_diff -= d(a - 1, a) + d(a, a + 1) + d(b - 1, b) + d(b, b + 1)
@@ -67,21 +71,21 @@ def EuclieanTSP(num_cities, dimensionality, neighborhood='2-opt', init='NN',
 
         return loss_diff
 
-    def neighbor_twoOpt(state, problem_data):
+    def neighbor_twoOpt(state, problem_data, direction):
         order = state['order']
         def d(a, b):
             return distance(order[f(a)], order[f(b)], problem_data)
 
-        a = np.random.randint(0, num_cities)
-        b = np.random.randint(0, num_cities - 1)
-        if b >= a:
-            b += 1
+        a = direction[0]
+        b = direction[1]
+
         if b < a:
             a, b = b, a
 
         # This is just reverting the visiting order of cities
         # No change so we don't do anything
-        if a == 0 and b == num_cities - 1:
+        # Also if a and b are the same we don't do anything
+        if (a == b) or (a == 0 and b == num_cities - 1):
             return 0.0
 
         loss_diff = 0
@@ -110,7 +114,7 @@ def EuclieanTSP(num_cities, dimensionality, neighborhood='2-opt', init='NN',
 
     neighbor_func = neighbor_funcs.get(neighborhood, None)
     if neighbor_func is None:
-        raise ValueError(f"""{meta_algo} not available, choose from
+        raise ValueError(f"""{neighborhood} not available, choose from
                          {', '.join(neighbor_funcs.keys())}""")
 
     class TSP(Problem):
@@ -119,6 +123,8 @@ def EuclieanTSP(num_cities, dimensionality, neighborhood='2-opt', init='NN',
             ('order', (np.int32, num_cities))
         ])
         problem_data_dtype = np.dtype((dtype, (num_cities, dimensionality)))
+        # This describe the dim of the neighborhood
+        neighbor_dimensionality = (num_cities, num_cities)
 
         @staticmethod
         def loss(state_array, problem_data):

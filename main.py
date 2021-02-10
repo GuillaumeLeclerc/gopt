@@ -4,7 +4,7 @@ import logging
 
 from gopt import Compiler
 from gopt.problems import EuclieanTSP
-from gopt.optimizers import LocalSearch
+from gopt.optimizers import RandomLocalSearch
 from gopt.runners import CPURunner
 from gopt.shufflers import IndependentShuffler, WinnerTakesAll
 
@@ -22,7 +22,7 @@ NUM_CITIES = DATA.shape[0]
 
 TSP = EuclieanTSP(DATA.shape[0], DATA.shape[1],
                   neighborhood='2-opt', init='NN')
-Optimizer = LocalSearch(TSP)
+Optimizer = RandomLocalSearch(TSP)
 Shuffler = WinnerTakesAll(Optimizer, 16)
 
 runner = CPURunner(Shuffler, DATA)
